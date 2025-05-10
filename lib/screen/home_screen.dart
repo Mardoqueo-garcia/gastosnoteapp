@@ -40,6 +40,76 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Funcion para mostrar las opciones
+  @override
+  void _mostrarOpciones(BuildContext context, Gasto gasto){
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext ctx){
+          return SafeArea(
+            child: Wrap(
+              children: [
+                // Para lo de modificar
+                ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: const Text('Modificar'),
+                  onTap: () async {
+                    Navigator.pop(ctx); // cierra el modal
+                    final resultado = await Navigator.pushNamed(
+                        context,
+                        '/edit',
+                        arguments: gasto,
+                    );
+                    if (resultado == true){
+                      _cargarGastosDelMes();
+                    }
+                  },
+                ),
+                // para lo de eliminar
+                ListTile(
+                  leading: const Icon(Icons.delete),
+                  title: const Text('Eliminar'),
+                  onTap: () {
+                    Navigator.pop(ctx); // cierra el modal
+                    _confirmarEliminacion(context, gasto);
+                  },
+                )
+              ],
+            ),
+          );
+        });
+  }
+
+  // funcion para eliminar en la pagina modal
+  @override
+  void _confirmarEliminacion(BuildContext context, Gasto gasto) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar gasto?'),
+        content: const Text('Estas seguro que deseas eliminar este gasto?'),
+        actions: [
+          TextButton(
+              onPressed: () =>  Navigator.of(ctx).pop(),
+          child: const Text('Cancelar'), // cancelamos lo de eliminar
+          ),
+          TextButton(
+              onPressed: () async {
+                await DatabaseHelper.instance.eliminarGasto(gasto.id!);
+                Navigator.of(ctx).pop(); // cierra el dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Gasto Eliminado')),
+                );
+                _cargarGastosDelMes(); // refresca la lista
+              },
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red),),
+          ),
+        ],
+      )
+    );
+  }
+
+
   // Construimos la pantalla visual principal
   @override
   Widget build(BuildContext context) {
@@ -81,6 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: Text(gasto.descripcion), // descripcion del gasto
                   subtitle: Text('${gasto.categoria} - ${gasto.fecha}'), // categoria y fecha
                   trailing: Text('\$${gasto.monto.toStringAsFixed(2)}'), // monto a la derecha
+                  onLongPress: () {
+                    _mostrarOpciones(context, gasto); // para que detecte el toque largo
+                  },
                 );
               },
             ),
