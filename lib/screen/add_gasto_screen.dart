@@ -60,7 +60,6 @@ class _AddGastoScreenState extends State<AddGastoScreen> {
         _categoria = 'Alimentación';
         _fecha = DateTime.now();
       });
-
     }
   }
 

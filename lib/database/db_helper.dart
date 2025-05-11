@@ -60,10 +60,15 @@ class DatabaseHelper {
   // devuelve todos los gastos registrados
   Future<List<Gasto>> obtenerGastos() async {
     final db = await database;
+    final ahora = DateTime.now();
+    final primerDiaDelMes = DateTime(ahora.year, ahora.month, 1);
+
     final List<Map<String, dynamic>> maps = await db.query(
         'gastos',
+      where: 'fecha >= ?',
+      whereArgs: [primerDiaDelMes.toIso8601String().substring(0,10)],
       orderBy: 'fecha DESC', // ordenar por fecha mas reciente
-      limit: 8, //s mostrara solo los 8 mas recientes
+      limit: 10, // mostrara solo los 8 mas recientes
     ); // realiza la consulta
 
     //convierte cada map a un objeto gasto

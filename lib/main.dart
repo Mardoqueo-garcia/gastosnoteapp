@@ -20,11 +20,6 @@ class GastoNoteApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const HomeScreen(),
-
-        // para poder navegar en el model hacia la pagina edit
-        routes: {
-          '/edit': (context) => const EditGastoScreen(),
-        },
     );
   }
 }

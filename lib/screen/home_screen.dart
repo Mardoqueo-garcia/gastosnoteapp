@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gastosnoteapp/database/db_helper.dart'; // bd
 import 'package:gastosnoteapp/model/gastos_models.dart'; // modelo
-import 'package:gastosnoteapp/screen/add_gasto_screen.dart'; // pantallas
+import 'package:gastosnoteapp/screen/add_gasto_screen.dart'; // pantalla
+import 'package:gastosnoteapp/screen/edit_gasto_screen.dart';
 
 // clase principal para la pantalla de inicio
 class HomeScreen extends StatefulWidget {
@@ -55,11 +56,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: const Text('Modificar'),
                   onTap: () async {
                     Navigator.pop(ctx); // cierra el modal
-                    final resultado = await Navigator.pushNamed(
-                        context,
-                        '/edit',
-                        arguments: gasto,
+                    // navega a la pantalla y espera el resultado
+                    final resultado = await Navigator.push(context,
+                      MaterialPageRoute(
+                        builder: (context) => EditGastoScreen(gasto: gasto)),
                     );
+                    // si se modifico el resultado se recargara la lista
                     if (resultado == true){
                       _cargarGastosDelMes();
                     }
