@@ -15,7 +15,7 @@ class DatabaseHelper {
   // Si la base de datos ya está abierta, la devuelve.
   // Si no está abierta, la crea o abre con el nombre 'gastos.db' y la devuelve.
   Future<Database> get database async {
-    if (_database != null) return _database!; // sino es null la retorna
+    if (_database != null) return _database!;
     _database = await _initDB('gastos.db'); // si no llama a _initDB para crearla o abrirla
     return _database!; // retorna la bd, el operador ! se usa para asegurar que no es null
   }
@@ -68,7 +68,7 @@ class DatabaseHelper {
       where: 'fecha >= ?',
       whereArgs: [primerDiaDelMes.toIso8601String().substring(0,10)],
       orderBy: 'fecha DESC', // ordenar por fecha mas reciente
-      limit: 10, // mostrara solo los 8 mas recientes
+      limit: 10, // mostrara solo los 10 mas recientes
     ); // realiza la consulta
 
     //convierte cada map a un objeto gasto

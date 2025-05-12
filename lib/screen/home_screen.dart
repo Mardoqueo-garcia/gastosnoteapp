@@ -3,6 +3,8 @@ import 'package:gastosnoteapp/database/db_helper.dart'; // bd
 import 'package:gastosnoteapp/model/gastos_models.dart'; // modelo
 import 'package:gastosnoteapp/screen/add_gasto_screen.dart'; // pantalla
 import 'package:gastosnoteapp/screen/edit_gasto_screen.dart';
+import 'package:gastosnoteapp/utils/fecha_utils.dart'; //
+import 'package:gastosnoteapp/utils/categoria_utils.dart';
 
 // clase principal para la pantalla de inicio
 class HomeScreen extends StatefulWidget {
@@ -14,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 
 // maneja el estado de la pantalla (dinamica)
 class _HomeScreenState extends State<HomeScreen> {
+  DateTime _mesSeleccionado = DateTime.now(); // variable para el mes seleccionado
   List<Gasto> _gastos = []; // Lista donde se guardarán los gastos del mes actual
   double _totalGastos = 0.0; // Total de gastos del mes
 
@@ -26,14 +29,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Función para obtener los gastos del mes desde la bd
   Future<void> _cargarGastosDelMes() async {
-    final List<Gasto> gastos = await DatabaseHelper.instance.buscarGastos(); // lista de objeto gasto desde la db
+    final List<Gasto> gastos = await DatabaseHelper.instance.obtenerGastos(); // lista de objeto gasto desde la db
 
     // calcula el gasto total sumando uno a uno
     double total = 0.0;
     for (var g in gastos) {
       total += g.monto;
     }
-
     // actualiza el estado de la pantalla con los nuevos gastos
     setState(() {
       _gastos = gastos;
@@ -131,10 +133,13 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween, // separa los textos a los extremos
-                children: [
-                  const Text('Total del mes:', style: TextStyle(fontSize: 18)), // muestra el total con dos decimales
-                  Text('\$${_totalGastos.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                children: [ Text (
+                  'Gastos del mes de ${obtenerNombreMes(_mesSeleccionado.month)}', // muestra el nombre del mes
+                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(
+                    '\$${_totalGastos.toStringAsFixed(2)}', // total de gastos con dos decimales
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                  ),
                 ],
               ),
             ),
@@ -150,7 +155,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 final gasto = _gastos[index];
                 return ListTile(
                   leading: const Icon(Icons.monetization_on), // icono al inicio
-                  title: Text(gasto.descripcion), // descripcion del gasto
+                  title: Text(gasto.descripcion,
+                  softWrap: true, // el texto se ajusta a varias lineas
+                  overflow: TextOverflow.ellipsis, // si es mucha agrega ...
+                  maxLines: 2, // dos lineas visibles
+                  ),
                   subtitle: Text('${gasto.categoria} - ${gasto.fecha}'), // categoria y fecha
                   trailing: Text('\$${gasto.monto.toStringAsFixed(2)}'), // monto a la derecha
                   onLongPress: () {

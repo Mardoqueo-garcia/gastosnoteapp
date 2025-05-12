@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:gastosnoteapp/database/db_helper.dart';
 import 'package:gastosnoteapp/model/gastos_models.dart';
+import 'package:gastosnoteapp/utils/categoria_utils.dart';
 
 class EditGastoScreen extends StatefulWidget {
   final Gasto gasto; // recibe el gasto a editar
-
   // constructor que requira que se le pase un objeto como parametro
   const EditGastoScreen({super.key, required this.gasto});
 
@@ -22,15 +22,6 @@ class _EditGastoScreenState extends State<EditGastoScreen> {
   // almacena la categoria y fecha
   late String _categoria;
   late DateTime _fecha;
-
-  // lista que se mostrara en el dropdown
-  final List<String> _categorias = [
-    'Alimentación',
-    'Transporte',
-    'Salud',
-    'Entretenimiento',
-    'Otros',
-  ];
 
   @override
   // Inicializacion de valores
@@ -107,6 +98,7 @@ class _EditGastoScreenState extends State<EditGastoScreen> {
             children: [
               TextFormField( // descripcion
                 controller: _descripcionController,
+                maxLines: 2, // maximo dos lineas
                 decoration: const InputDecoration(labelText: 'Descripción'),
                 validator: (value) =>
                 value == null || value.isEmpty ? 'Campo requerido' : null,
@@ -126,7 +118,7 @@ class _EditGastoScreenState extends State<EditGastoScreen> {
               DropdownButtonFormField<String>( // menu de categorias
                 value: _categoria,
                 decoration: const InputDecoration(labelText: 'Categoría'),
-                items: _categorias
+                items: categoriaGasto // mostrara las categorias
                     .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                     .toList(),
                 onChanged: (value) => setState(() => _categoria = value!),

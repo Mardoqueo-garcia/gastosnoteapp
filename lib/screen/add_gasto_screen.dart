@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gastosnoteapp/database/db_helper.dart';
 import 'package:gastosnoteapp/model/gastos_models.dart';
+import 'package:gastosnoteapp/utils/categoria_utils.dart';
 
 // pantalla para agregar nuevo gasto
 class AddGastoScreen extends StatefulWidget {
@@ -19,15 +20,6 @@ class _AddGastoScreenState extends State<AddGastoScreen> {
   double _monto = 0.0;
   String _categoria = 'Alimentación'; // valor por defecto
   DateTime _fecha = DateTime.now(); // fecha por defecto (hoy)
-
-  // Lista de categorías para el Dropdown
-  final List<String> _categorias = [
-    'Alimentación',
-    'Transporte',
-    'Salud',
-    'Entretenimiento',
-    'Otros',
-  ];
 
   // Controladores para limpiar los campos luego de guardar
   final TextEditingController _descripcionController = TextEditingController();
@@ -100,6 +92,7 @@ class _AddGastoScreenState extends State<AddGastoScreen> {
               //campo de descripcion
               TextFormField(
                 controller: _descripcionController,
+                maxLength: 30, // maximo 40 caracteres
                 decoration: const InputDecoration(labelText: 'Descripción'),
                 validator: (value) =>
                 value == null || value.isEmpty ? 'Campo requerido' : null,
@@ -134,7 +127,7 @@ class _AddGastoScreenState extends State<AddGastoScreen> {
               DropdownButtonFormField(
                 value: _categoria,
                 decoration: const InputDecoration(labelText: 'Categoría'),
-                items: _categorias
+                items: categoriaGasto // mostrara la lista de las categorias
                     .map((cat) =>
                     DropdownMenuItem(value: cat, child: Text(cat)))
                     .toList(),
