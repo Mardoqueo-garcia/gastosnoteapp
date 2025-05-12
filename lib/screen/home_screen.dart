@@ -14,13 +14,15 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-// maneja el estado de la pantalla (dinamica)
+// Maneja el estado de la pantalla (dinamica)
 class _HomeScreenState extends State<HomeScreen> {
-  DateTime _mesSeleccionado = DateTime.now(); // variable para el mes seleccionado
+  DateTime _mesSeleccionado = DateTime.now(); // Mes seleccionado por defecto el actual
+  DateTime _mesActual = DateTime.now(); // Variable para validacion del refresh
   List<Gasto> _gastos = []; // Lista donde se guardarán los gastos del mes actual
   double _totalGastos = 0.0; // Total de gastos del mes
+  String _categoriaSeleccionada = 'Todas'; // por defecto
 
-  // se ejecutara la funcion al iniciar la pantalla
+  // Se ejecutara la funcion al iniciar la pantalla
   @override
   void initState() {
     super.initState();
@@ -31,19 +33,19 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _cargarGastosDelMes() async {
     final List<Gasto> gastos = await DatabaseHelper.instance.obtenerGastos(); // lista de objeto gasto desde la db
 
-    // calcula el gasto total sumando uno a uno
+    // Calcula el gasto total sumando uno a uno
     double total = 0.0;
     for (var g in gastos) {
       total += g.monto;
     }
-    // actualiza el estado de la pantalla con los nuevos gastos
+    // Actualiza el estado de la pantalla con los nuevos gastos
     setState(() {
       _gastos = gastos;
       _totalGastos = total;
     });
   }
 
-  // Funcion para mostrar las opciones
+  // Funcion para mostrar las opciones al presionar un gasto en la lista
   @override
   void _mostrarOpciones(BuildContext context, Gasto gasto){
     showModalBottomSheet(
@@ -69,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                 ),
-                // para lo de eliminar
+                // Para lo de eliminar
                 ListTile(
                   leading: const Icon(Icons.delete),
                   title: const Text('Eliminar'),
@@ -84,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
   }
 
-  // funcion para eliminar en la pagina modal
+  // Funcion para eliminar en la pagina modal
   @override
   void _confirmarEliminacion(BuildContext context, Gasto gasto) {
     showDialog(
@@ -113,6 +115,49 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Funcion para el buscador
+  void _buscarGastoMesyCategoria() async {
+    final db = await DatabaseHelper.instance.database;
+    final primerDia = DateTime(_mesSeleccionado.year, _mesSeleccionado.month, 1);
+    final ultimoDia =  DateTime(_mesSeleccionado.year, _mesSeleccionado.month + 1, 0);
+    String where = 'fecha BETWEEN ? AND ?';
+
+    List<String> whereArgs = [
+      primerDia.toIso8601String().substring(0,10),
+      ultimoDia.toIso8601String().substring(0,10)];
+    if (_categoriaSeleccionada != 'Todas') {
+      where += ' AND categoria = ?';
+      whereArgs.add(_categoriaSeleccionada);
+    }
+    // Hacemos la consulta a la db
+    final maps = await db.query(
+      'gastos',
+      where: where,
+      whereArgs: whereArgs,
+      orderBy: 'fecha DESC'
+    );
+
+    setState(() {
+      _gastos = maps.map((e) => Gasto.fromMap(e)).toList();
+      _totalGastos = _gastos.fold(0, (suma, g) => suma + g.monto);
+    });
+  }
+
+  // Funcion para limpiar los filtros y restablecer pantalla
+  void _restablecerFiltros() {
+    setState(() {
+      _mesSeleccionado = DateTime.now();
+      _categoriaSeleccionada = 'Todas';
+    });
+    _cargarGastosDelMes(); // Cargaremos los datos
+  }
+
+  // Funcion para ocultar el boton de limpiar
+  bool _esMesActual(DateTime fecha) {
+    final ahora = DateTime.now();
+    return fecha.month == ahora.month && fecha.year == ahora.year;
+  }
+
 
   // Construimos la pantalla visual principal
   @override
@@ -124,69 +169,162 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // targeta que muestra el total de gasto del mes
+          // Filtros de busqueda (mes y categoria)
+          Padding(padding: const
+          EdgeInsets.symmetric(horizontal: 12,
+          vertical: 8),
+          child: Row(
+            children: [
+              // Selector de mes
+              Expanded(child:
+              DropdownButtonFormField<int>(
+                decoration: const
+                    InputDecoration(labelText: 'Mes'),
+                value: _mesSeleccionado.month,
+                items: List.generate(DateTime.now().month, (index) {
+                  final mes = index + 1;
+                  return DropdownMenuItem(
+                    value: mes,
+                    child:
+                    Text(obtenerNombreMes(mes)),
+                  );
+                }),
+                onChanged: (mes) {
+                  if (mes != null) {
+                    setState(() {
+                      _mesSeleccionado = DateTime(DateTime.now().year, mes);
+                    });
+
+                    _buscarGastoMesyCategoria();
+                  }
+                },
+              ),
+            ),
+
+              const SizedBox(width: 12),
+              // Selector de categoria
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  decoration: const
+                      InputDecoration(labelText: 'Categoria'),
+                  value: _categoriaSeleccionada,
+                  items: ['Todas', ...categoriaGasto].map((cat) {
+                    return DropdownMenuItem(
+                      value: cat,
+                      child: Text(cat),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState( () =>
+                      _categoriaSeleccionada = value!);
+
+                    _buscarGastoMesyCategoria();
+                  },
+                ),
+              )
+            ],
+          )
+        ),
+
+          // Targeta de total de gastos del mes
           Card(
-            margin: const EdgeInsets.all(12), // espacio externo
+            margin: const EdgeInsets.all(12), // Espacio externo
             elevation: 3, // sombra
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween, // separa los textos a los extremos
-                children: [ Text (
-                  'Gastos del mes de ${obtenerNombreMes(_mesSeleccionado.month)}', // muestra el nombre del mes
-                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Separa los textos a los extremos
+                children: [
                   Text(
-                    '\$${_totalGastos.toStringAsFixed(2)}', // total de gastos con dos decimales
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                    'Gastos del mes de ${obtenerNombreMes((_mesSeleccionado.month))}', // Muestra el nombre del mes
+                    style: const
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '\$${_totalGastos.toStringAsFixed((2))}', // Total de gastos con dos decimales
+                    style: const
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
           ),
 
-          // Lista que mostrara los gastos del mes
-          Expanded(
-            child: _gastos.isEmpty // si no hay gasto muestra un mensaje
-                ? const Center(child: Text('No hay gastos este mes.'))
-                : ListView.builder( // si hay gastos construye la lista
-              itemCount: _gastos.length,
-              itemBuilder: (context, index) {
-                final gasto = _gastos[index];
-                return ListTile(
-                  leading: const Icon(Icons.monetization_on), // icono al inicio
-                  title: Text(gasto.descripcion,
-                  softWrap: true, // el texto se ajusta a varias lineas
-                  overflow: TextOverflow.ellipsis, // si es mucha agrega ...
-                  maxLines: 2, // dos lineas visibles
+          // Boton para limpiar filtros y mostrar solo si se ha buscado algo
+          if (_categoriaSeleccionada != 'Todas' ||
+            _mesSeleccionado.month != _mesActual.month ||
+            _mesSeleccionado.year != _mesActual.year)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                    onPressed: _restablecerFiltros,
+                  icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.blue
                   ),
-                  subtitle: Text('${gasto.categoria} - ${gasto.fecha}'), // categoria y fecha
-                  trailing: Text('\$${gasto.monto.toStringAsFixed(2)}'), // monto a la derecha
-                  onLongPress: () {
-                    _mostrarOpciones(context, gasto); // para que detecte el toque largo
-                  },
-                );
-              },
+                  label: const Text(
+                    'Restablecer filtros',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
             ),
+
+          // Lista de gastos del mes
+          Expanded(
+              // Si no hay gastos muestra este mensaje
+              child: _gastos.isEmpty? const Center(child: Text('No hay gastos este mes')) :
+                ListView.builder( // Si hay gastos construye la lista
+                  itemCount: _gastos.length,
+                  itemBuilder: (context, index) {
+                    final gasto = _gastos[index];
+                    return ListTile(
+                      leading: const Icon(Icons.monetization_on), // icono de moneda al inicio
+                      title: Text(
+                        gasto.descripcion,
+                        softWrap: true, // El texto se ajusta a varias lineas
+                        overflow: TextOverflow.ellipsis, // si es mucha agrega tres puntos (...)
+                        maxLines: 2, // solo dos lineas visibles
+                      ),
+                      subtitle: Text('${gasto.categoria}  - ${gasto.fecha}'),
+                      trailing: Text('\$${gasto.monto.toStringAsFixed((2))}'),
+                      onLongPress: () { // Para que detecte el toque largo
+                        _mostrarOpciones(context, gasto);
+                      },
+                    );
+                  },
+                ),
           ),
         ],
       ),
 
-      // boton flotante para agregar un nuevo gasto
+      // Boton flotante para agregar un nuevo gasto
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // navega a la pantalla de nuevo gasto
-          final resultado = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddGastoScreen()),
-          );
-          // si se agrego un gasto recarga la lista
-          if(resultado == true){
-            _cargarGastosDelMes();
-          }
-        },
+          onPressed: () async {
+            final resultado = await Navigator.push(context,
+                // Navega a la pantalla de nuevo gasto
+                MaterialPageRoute(builder: (context) => const AddGastoScreen()),
+            );
+            // Si se agrego un gasto recarga la lista
+            if (resultado == true) {
+              _cargarGastosDelMes();
+            }
+          },
+        // Icono de +
         child: const Icon(Icons.add),
-      ),
+          ),
     );
   }
 }
