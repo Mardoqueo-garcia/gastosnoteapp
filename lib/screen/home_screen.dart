@@ -50,20 +50,25 @@ class _HomeScreenState extends State<HomeScreen> {
   void _mostrarOpciones(BuildContext context, Gasto gasto){
     showModalBottomSheet(
         context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        backgroundColor: Colors.white,
         builder: (BuildContext ctx){
-          return SafeArea(
-            child: Wrap(
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Para lo de modificar
                 ListTile(
-                  leading: const Icon(Icons.edit),
+                  leading: const Icon(Icons.edit, color: Colors.green),
                   title: const Text('Modificar'),
                   onTap: () async {
                     Navigator.pop(ctx); // cierra el modal
                     // navega a la pantalla y espera el resultado
                     final resultado = await Navigator.push(context,
                       MaterialPageRoute(
-                        builder: (context) => EditGastoScreen(gasto: gasto)),
+                          builder: (context) => EditGastoScreen(gasto: gasto)),
                     );
                     // si se modifico el resultado se recargara la lista
                     if (resultado == true){
@@ -71,9 +76,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                 ),
-                // Para lo de eliminar
+                const Divider(),
                 ListTile(
-                  leading: const Icon(Icons.delete),
+                  leading: const Icon(
+                      Icons.delete,
+                      color: Colors.red),
                   title: const Text('Eliminar'),
                   onTap: () {
                     Navigator.pop(ctx); // cierra el modal
@@ -91,23 +98,39 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar gasto?'),
-        content: const Text('Estas seguro que deseas eliminar este gasto?'),
+        //borderradius del modal principal
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text('Eliminar gasto?', 
+          style: TextStyle(fontWeight: FontWeight.bold),),
+        content: const Text('Seguro que deseas eliminar este gasto?'),
         actions: [
           TextButton(
               onPressed: () =>  Navigator.of(ctx).pop(),
-          child: const Text('Cancelar'), // cancelamos lo de eliminar
+          child: const Text(
+              'Cancelar',
+            style: TextStyle(
+              color: Colors.red,
+            ),
+          ), // cancelamos lo de eliminar
           ),
-          TextButton(
-              onPressed: () async {
-                await DatabaseHelper.instance.eliminarGasto(gasto.id!);
-                Navigator.of(ctx).pop(); // cierra el dialog
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Gasto Eliminado')),
-                );
-                _cargarGastosDelMes(); // refresca la lista
-              },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red),),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.lightGreen,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: const Icon(Icons.delete, color: Colors.red,),
+            label: const Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.red),
+            ),
+            onPressed: () async {
+              await DatabaseHelper.instance.eliminarGasto(gasto.id!);
+              Navigator.of(ctx).pop(); // cierra el dialog
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Gasto Eliminado')),
+              );
+              _cargarGastosDelMes(); // refresca la lista
+            },
           ),
         ],
       )
@@ -219,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text.rich(
+                Text.rich( // para combinar dos textos
                   TextSpan(
                     children: [
                       const TextSpan(
@@ -259,10 +282,18 @@ class _HomeScreenState extends State<HomeScreen> {
           // Dropdown de mes
           Expanded(
             child: DropdownButtonFormField<int>(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Mes',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.calendar_today),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                prefixIcon: const Icon(Icons.calendar_today),
+              ),
+              dropdownColor: Colors.lightBlueAccent,
+              icon: Icon(Icons.arrow_drop_down, color: Colors.green),
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
               ),
               value: _mesSeleccionado.month,
               items: List.generate(DateTime.now().month, (index) {
@@ -286,11 +317,14 @@ class _HomeScreenState extends State<HomeScreen> {
           // Dropdown de categoría
           Expanded(
             child: DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Categoría',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                prefixIcon: const Icon(Icons.category),
               ),
+              dropdownColor: Colors.lightBlueAccent,
               value: _categoriaSeleccionada,
               items: ['Todas', ...categoriaGasto].map((cat) {
                 return DropdownMenuItem(value: cat, child: Text(cat));
