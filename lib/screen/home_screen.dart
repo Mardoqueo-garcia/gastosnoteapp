@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _totalGastos = 0.0; // Total de gastos del mes
   String _categoriaSeleccionada = 'Todas'; // por defecto
 
+
   // Se ejecutara la funcion al iniciar la pantalla
   @override
   void initState() {
@@ -159,93 +160,169 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  // Construimos la pantalla visual principal
+  // CONTRUCCION DE LA PANTALLA VISUAL
+
+  // Pantalla para el buscador
+  @override
+  Widget _buildFiltroWidget() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Row(
+        children: [
+          // Dropdown de mes
+          Expanded(
+            child: DropdownButtonFormField<int>(
+              decoration: const InputDecoration(
+                labelText: 'Mes',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.calendar_today),
+              ),
+              value: _mesSeleccionado.month,
+              items: List.generate(DateTime.now().month, (index) {
+                final mes = index + 1;
+                return DropdownMenuItem(
+                  value: mes,
+                  child: Text(obtenerNombreMes(mes)),
+                );
+              }),
+              onChanged: (mes) {
+                if (mes != null) {
+                  setState(() {
+                    _mesSeleccionado = DateTime(DateTime.now().year, mes);
+                  });
+                  _buscarGastoMesyCategoria();
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Dropdown de categoría
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Categoría',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.category),
+              ),
+              value: _categoriaSeleccionada,
+              items: ['Todas', ...categoriaGasto].map((cat) {
+                return DropdownMenuItem(value: cat, child: Text(cat));
+              }).toList(),
+              onChanged: (value) {
+                setState(() => _categoriaSeleccionada = value!);
+                _buscarGastoMesyCategoria();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  //Pantalla de resumen de gastos y appbar
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('GastosNotes'),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Filtros de busqueda (mes y categoria)
-          Padding(padding: const
-          EdgeInsets.symmetric(horizontal: 12,
-          vertical: 8),
-          child: Row(
-            children: [
-              // Selector de mes
-              Expanded(child:
-              DropdownButtonFormField<int>(
-                decoration: const
-                    InputDecoration(labelText: 'Mes'),
-                value: _mesSeleccionado.month,
-                items: List.generate(DateTime.now().month, (index) {
-                  final mes = index + 1;
-                  return DropdownMenuItem(
-                    value: mes,
-                    child:
-                    Text(obtenerNombreMes(mes)),
-                  );
-                }),
-                onChanged: (mes) {
-                  if (mes != null) {
-                    setState(() {
-                      _mesSeleccionado = DateTime(DateTime.now().year, mes);
-                    });
-
-                    _buscarGastoMesyCategoria();
-                  }
-                },
+      appBar: AppBar( // Diseño del Titulo de la app
+        elevation: 3,
+        backgroundColor: Colors.green,
+        toolbarHeight: 80,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
               ),
+              padding: const EdgeInsets.all(6),
+              child:
+                Icon(Icons.account_balance_wallet_rounded,
+                color: Colors.red,
+                size: 28),
             ),
 
-              const SizedBox(width: 12),
-              // Selector de categoria
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  decoration: const
-                      InputDecoration(labelText: 'Categoria'),
-                  value: _categoriaSeleccionada,
-                  items: ['Todas', ...categoriaGasto].map((cat) {
-                    return DropdownMenuItem(
-                      value: cat,
-                      child: Text(cat),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState( () =>
-                      _categoriaSeleccionada = value!);
-
-                    _buscarGastoMesyCategoria();
-                  },
-                ),
-              )
-            ],
-          )
+            const SizedBox(width: 12),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'GASTOS',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'NOTE',
+                    style: TextStyle(
+                      color: Colors.red, // Contraste suave
+                      fontWeight: FontWeight.w500,
+                      fontSize: 22,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
+      ),
+
+      body: Column(
+        children: [
+          const SizedBox(height: 8), // Espacio entre buscador y targeta
+          _buildFiltroWidget(), // llamado la funcion del widget creado de los filtros
 
           // Targeta de total de gastos del mes
           Card(
-            margin: const EdgeInsets.all(12), // Espacio externo
-            elevation: 3, // sombra
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10
+            ),
+            elevation: 4, // sombra
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
+              borderRadius: BorderRadius.circular(16)),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Separa los textos a los extremos
                 children: [
-                  Text(
-                    'Gastos del mes de ${obtenerNombreMes((_mesSeleccionado.month))}', // Muestra el nombre del mes
-                    style: const
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  //Icono decorativo
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.all(10),
+                    child: const Icon(
+                      Icons.bar_chart,
+                      color: Colors.white,
+                    size: 28),
                   ),
-                  Text(
-                    '\$${_totalGastos.toStringAsFixed((2))}', // Total de gastos con dos decimales
-                    style: const
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  const SizedBox(width: 16),
+
+                  // Texto del total
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Gastos total de ${obtenerNombreMes(_mesSeleccionado.month)}',
+                          style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                          color: Colors.black87),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '\$${_totalGastos.toStringAsFixed((2))}',
+                          style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green),
+                        ),
+                      ],
+                    )
                   ),
                 ],
               ),
@@ -264,12 +341,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: _restablecerFiltros,
                   icon: const Icon(
                       Icons.refresh,
-                      color: Colors.blue
+                      color: Colors.red
                   ),
                   label: const Text(
                     'Restablecer filtros',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: Colors.red,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -285,24 +362,50 @@ class _HomeScreenState extends State<HomeScreen> {
           // Lista de gastos del mes
           Expanded(
               // Si no hay gastos muestra este mensaje
-              child: _gastos.isEmpty? const Center(child: Text('No hay gastos este mes')) :
+              child: _gastos.isEmpty? const Center(
+                  child: Text(
+                      'No hay gastos este mes',
+                  style: TextStyle(
+                    fontSize: 16, color: Colors.grey),
+                  )) :
                 ListView.builder( // Si hay gastos construye la lista
                   itemCount: _gastos.length,
                   itemBuilder: (context, index) {
                     final gasto = _gastos[index];
-                    return ListTile(
-                      leading: const Icon(Icons.monetization_on), // icono de moneda al inicio
-                      title: Text(
-                        gasto.descripcion,
-                        softWrap: true, // El texto se ajusta a varias lineas
-                        overflow: TextOverflow.ellipsis, // si es mucha agrega tres puntos (...)
-                        maxLines: 2, // solo dos lineas visibles
+                    return Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)
                       ),
-                      subtitle: Text('${gasto.categoria}  - ${gasto.fecha}'),
-                      trailing: Text('\$${gasto.monto.toStringAsFixed((2))}'),
-                      onLongPress: () { // Para que detecte el toque largo
-                        _mostrarOpciones(context, gasto);
-                      },
+                      elevation: 3,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.blue.shade100,
+                          child: const Icon(Icons.monetization_on, color: Colors.white),
+                        ),
+                        title: Text(
+                          gasto.descripcion,
+                          softWrap: true, // El texto se ajusta a varias lineas
+                          overflow: TextOverflow.ellipsis, // si es mucha agrega tres puntos (...)
+                          maxLines: 2, // solo dos lineas visibles
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                            '${gasto.categoria} •   ${gasto.fecha}',
+                          style: const TextStyle(color: Colors.black54),
+                        ),
+                        trailing: Text(
+                            '\$${gasto.monto.toStringAsFixed((2))}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green
+                          ),
+                        ),
+                        onLongPress: () { // Para que detecte el toque largo
+                          _mostrarOpciones(context, gasto);
+                        },
+                      ),
                     );
                   },
                 ),
