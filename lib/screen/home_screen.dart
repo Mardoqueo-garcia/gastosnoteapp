@@ -47,7 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Funcion para mostrar las opciones al presionar un gasto en la lista
-  @override
   void _mostrarOpciones(BuildContext context, Gasto gasto){
     showModalBottomSheet(
         context: context,
@@ -88,7 +87,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Funcion para eliminar en la pagina modal
-  @override
   void _confirmarEliminacion(BuildContext context, Gasto gasto) {
     showDialog(
       context: context,
@@ -153,17 +151,106 @@ class _HomeScreenState extends State<HomeScreen> {
     _cargarGastosDelMes(); // Cargaremos los datos
   }
 
-  // Funcion para ocultar el boton de limpiar
-  bool _esMesActual(DateTime fecha) {
-    final ahora = DateTime.now();
-    return fecha.month == ahora.month && fecha.year == ahora.year;
+  // Funcion para cambiar de color segun la categoria
+  Color obtenerColorCategoria (String categoria) {
+    switch (categoria.toLowerCase()) {
+      case 'alimentación': return Colors.orangeAccent;
+      case 'salud': return Colors.blueAccent;
+      case 'entretenimiento': return Colors.purpleAccent;
+      case 'transporte': return Colors.black;
+      case 'otros': return Colors.grey;
+      default: return Colors.green;
+    }
+  }
+  // Funcion para obtener codigo segun categoria
+  String obtenerCodCategoria(String categoria){
+    switch(categoria.toLowerCase()){
+      case 'alimentación': return 'AL';
+      case 'salud': return 'SA';
+      case 'entretenimiento': return 'EN';
+      case 'transporte': return 'TR';
+      case 'otros': return 'OT';
+      default: return 'XX';
+    }
+  }
+  // Funcion de estilo del appBar (Titulo)
+  PreferredSizeWidget appBarEstilo(){
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(65), // altura del appbar
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB2DFDB),
+              Color(0xFF80CBC4),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(25),
+            bottomRight: Radius.circular(25),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black87,
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: const Icon(
+                    Icons.account_balance_wallet_rounded,
+                    color: Colors.red,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'GASTOS',
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                         fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'NOTE',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 22
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ),
+      ),
+    );
   }
 
-
   // CONTRUCCION DE LA PANTALLA VISUAL
-
   // Pantalla para el buscador
-  @override
   Widget _buildFiltroWidget() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -224,56 +311,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar( // Diseño del Titulo de la app
-        elevation: 3,
-        backgroundColor: Colors.green,
-        toolbarHeight: 80,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.all(6),
-              child:
-                Icon(Icons.account_balance_wallet_rounded,
-                color: Colors.red,
-                size: 28),
-            ),
+      appBar: appBarEstilo(),
 
-            const SizedBox(width: 12),
-            Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'GASTOS',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  TextSpan(
-                    text: 'NOTE',
-                    style: TextStyle(
-                      color: Colors.red, // Contraste suave
-                      fontWeight: FontWeight.w500,
-                      fontSize: 22,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/background_image.png'),
+            fit: BoxFit.cover, // para que se ajuste la imagen al tamaño de pantalla
+          ),
         ),
-      ),
-
-      body: Column(
+      child: Column(
         children: [
-          const SizedBox(height: 8), // Espacio entre buscador y targeta
+          const SizedBox(height: 14), // Espacio entre buscador y targeta
           _buildFiltroWidget(), // llamado la funcion del widget creado de los filtros
 
           // Targeta de total de gastos del mes
@@ -361,6 +410,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Lista de gastos del mes
           Expanded(
+             child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8), // espacio a los lados
               // Si no hay gastos muestra este mensaje
               child: _gastos.isEmpty? const Center(
                   child: Text(
@@ -380,8 +431,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         leading: CircleAvatar(
-                          backgroundColor: Colors.blue.shade100,
-                          child: const Icon(Icons.monetization_on, color: Colors.white),
+                          backgroundColor: obtenerColorCategoria(gasto.categoria),
+                          child: Text(
+                            obtenerCodCategoria(gasto.categoria),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold
+                            ),
+                          ),
                         ),
                         title: Text(
                           gasto.descripcion,
@@ -409,25 +466,48 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                 ),
+             ),
           ),
         ],
       ),
-
+      ),
       // Boton flotante para agregar un nuevo gasto
-      floatingActionButton: FloatingActionButton(
+
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle, // el boton sera redondo
+          gradient: LinearGradient( // utilizaremos degradado
+            colors: [
+              Colors.lightGreen.shade400,
+              Colors.greenAccent.shade100,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow( // sombre suave debajo del boton
+              color: Colors.green,
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           onPressed: () async {
             final resultado = await Navigator.push(context,
-                // Navega a la pantalla de nuevo gasto
-                MaterialPageRoute(builder: (context) => const AddGastoScreen()),
+              // Navega a la pantalla de nuevo gasto
+              MaterialPageRoute(builder: (context) => const AddGastoScreen()),
             );
             // Si se agrego un gasto recarga la lista
             if (resultado == true) {
               _cargarGastosDelMes();
             }
           },
-        // Icono de +
-        child: const Icon(Icons.add),
-          ),
+          child: const Icon(Icons.add, size: 30),
+        ),
+      )
     );
   }
 }
