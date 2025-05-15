@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 // Maneja el estado de la pantalla (dinamica)
 class _HomeScreenState extends State<HomeScreen> {
   DateTime _mesSeleccionado = DateTime.now(); // Mes seleccionado por defecto el actual
-  DateTime _mesActual = DateTime.now(); // Variable para validacion del refresh
+  final DateTime _mesActual = DateTime.now(); // Variable para validacion del refresh
   List<Gasto> _gastos = []; // Lista donde se guardarán los gastos del mes actual
   double _totalGastos = 0.0; // Total de gastos del mes
   String _categoriaSeleccionada = 'Todas'; // por defecto
@@ -276,19 +276,27 @@ class _HomeScreenState extends State<HomeScreen> {
   // Pantalla para el buscador
   Widget _buildFiltroWidget() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(12,12,12,8),
       child: Row(
         children: [
           // Dropdown de mes
           Expanded(
             child: DropdownButtonFormField<int>(
+              isExpanded: true, // para que se pueda expandir
               decoration: InputDecoration(
                 labelText: 'Mes',
+                filled: true,
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.green.shade300, width: 2)
                 ),
-                prefixIcon: const Icon(Icons.calendar_today),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.green, width: 2)
+                )
               ),
+              // estilo del menu desplegable
               dropdownColor: Colors.lightBlueAccent,
               icon: Icon(Icons.arrow_drop_down, color: Colors.green),
               style: const TextStyle(
@@ -317,14 +325,28 @@ class _HomeScreenState extends State<HomeScreen> {
           // Dropdown de categoría
           Expanded(
             child: DropdownButtonFormField<String>(
+              isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Categoría',
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.category),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.green.shade300, width: 2)
                 ),
-                prefixIcon: const Icon(Icons.category),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.green, width: 3)
+                )
               ),
+              // estilo del menu desplegable
               dropdownColor: Colors.lightBlueAccent,
+              icon: Icon(Icons.arrow_drop_down, color: Colors.green),
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
               value: _categoriaSeleccionada,
               items: ['Todas', ...categoriaGasto].map((cat) {
                 return DropdownMenuItem(value: cat, child: Text(cat));
