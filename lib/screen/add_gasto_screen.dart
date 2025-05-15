@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:gastosnoteapp/database/db_helper.dart';
 import 'package:gastosnoteapp/model/gastos_models.dart';
 import 'package:gastosnoteapp/utils/categoria_utils.dart';
+import 'package:gastosnoteapp/utils/toast_utils.dart';
 
 // pantalla para agregar nuevo gasto
 class AddGastoScreen extends StatefulWidget {
@@ -41,8 +42,9 @@ class _AddGastoScreenState extends State<AddGastoScreen> {
       await DatabaseHelper.instance.insertarGasto(nuevoGasto); // esperamos que se agregue el gasto a la db
 
       // Mostrar mensaje de exito
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gasto guardado correctamente')),
+      mostrarToast(
+          context, 'Gasto agregado correctamente',
+          Colors.green, Icons.check_circle
       );
 
       // Limpiar los campos del formulario

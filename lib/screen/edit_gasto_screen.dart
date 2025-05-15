@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gastosnoteapp/database/db_helper.dart';
 import 'package:gastosnoteapp/model/gastos_models.dart';
 import 'package:gastosnoteapp/utils/categoria_utils.dart';
+import 'package:gastosnoteapp/utils/toast_utils.dart';
 
 class EditGastoScreen extends StatefulWidget {
   final Gasto gasto; // recibe el gasto a editar
@@ -75,9 +76,9 @@ class _EditGastoScreenState extends State<EditGastoScreen> {
 
       // Mostrar alerta de éxito
       if (mounted) { // verfica que el widget aun esta activo
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gasto modificado correctamente')),
-        );
+        mostrarToast(
+            context, 'Gasto modificado correctamente',
+            Colors.orange, Icons.edit);
         // retorna true para indicar que hubo cambios, y navega a la pantalla principal
         Navigator.pop(context, true);
       }
