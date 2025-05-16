@@ -83,82 +83,122 @@ class _AddGastoScreenState extends State<AddGastoScreen> {
   // Construiremos la interfaz
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Agregar Gasto')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey, // asignacion de clave al formulario
-          child: ListView(
-            children: [
-              //campo de descripcion
-              TextFormField(
-                controller: _descripcionController,
-                maxLength: 30, // maximo 40 caracteres
-                decoration: const InputDecoration(labelText: 'Descripción'),
-                validator: (value) =>
-                value == null || value.isEmpty ? 'Campo requerido' : null,
-                onSaved: (value) => _descripcion = value!,
-              ),
-              const SizedBox(height: 10),
-              // campo de monto
-              TextFormField(
-                controller: _montoController,
-                decoration: const InputDecoration(labelText: 'Monto'),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Campo requerido';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Ingrese un número válido';
-                  }
-                  if (_monto >=10000){
-                    return 'Maximo permitido: 9999.99';
-                  }
-                  return null;
-                },
-                inputFormatters: [
-                  // Esto limita a 4 dígitos enteros y 2 decimales
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}(\.\d{0,2})?$')),
-                ],
-                onSaved: (value) => _monto = double.parse(value!),
-              ),
-              const SizedBox(height: 10),
-              // dropdown de categoria
-              DropdownButtonFormField(
-                value: _categoria,
-                decoration: const InputDecoration(labelText: 'Categoría'),
-                items: categoriaGasto // mostrara la lista de las categorias
-                    .map((cat) =>
-                    DropdownMenuItem(value: cat, child: Text(cat)))
-                    .toList(),
-                onChanged: (value) => setState(() => _categoria = value!),
-              ),
-              const SizedBox(height: 10),
-              // selector de fecha
-              ListTile(
-                title: Text('Fecha: ${_fecha.toLocal().toString().substring(0, 10)}'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _seleccionarFecha,
-              ),
-              const SizedBox(height: 20),
-              //boton de guardar el gasto
-              ElevatedButton(
-                onPressed: () async {
-                  // verifica que los campos sean validos antes de guardar
-                  if (_formKey.currentState!.validate()){
-                    await _guardarGasto();
-                    Navigator.pop(context, true);
-                    }
-                  },
-                  child: const Text('Guardar'
-                ),
-              ),
-            ],
+    return Stack(
+      children: [
+        // imagen de fondo
+        Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/background_image.png'),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
-      ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+              title: const Text('Agregar Gasto'),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey, // asignacion de clave al formulario
+              child: Column(
+                children: [
+                  //campo de descripcion
+                  TextFormField(
+                    controller: _descripcionController,
+                    maxLength: 40, // maximo 40 caracteres
+                    decoration: InputDecoration(
+                        labelText: 'Descripción',
+                      prefixIcon: Icon(Icons.description),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    validator: (value) =>
+                    value == null || value.isEmpty ? 'Campo requerido' : null,
+                    onSaved: (value) => _descripcion = value!,
+                  ),
+                  const SizedBox(height: 16),
+                  // campo de monto
+                  TextFormField(
+                    controller: _montoController,
+                    decoration: InputDecoration(
+                        labelText: 'Monto',
+                      prefixIcon: const Icon(Icons.attach_money),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}(\.\d{0,2})?$')),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Campo requerido';
+                      }
+                      if (double.tryParse(value) == null) {
+                        return 'Ingrese un número válido';
+                      }
+                      if (_monto >=10000){
+                        return 'Maximo permitido: 9999.99';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _monto = double.parse(value!),
+                  ),
+                  const SizedBox(height: 16),
+                  // dropdown de categoria
+                  DropdownButtonFormField(
+                    value: _categoria,
+                    decoration: InputDecoration(
+                        labelText: 'Categoría',
+                      prefixIcon: const Icon(Icons.category),
+                      fillColor: Colors.white,
+                      filled: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    items: categoriaGasto // mostrara la lista de las categorias
+                        .map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
+                    onChanged: (value) => setState(() => _categoria = value!),
+                  ),
+                  const SizedBox(height: 16),
+                  // selector de fecha
+                  ListTile(
+                    title: Text('Fecha: ${_fecha.toLocal().toString().substring(0, 10)}'),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    trailing: const Icon(Icons.calendar_today, color: Colors.green),
+                    onTap: _seleccionarFecha,
+                  ),
+                  const SizedBox(height: 30),
+                  //boton de guardar el gasto
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      // verifica que los campos sean validos antes de guardar
+                      if (_formKey.currentState!.validate()){
+                        await _guardarGasto();
+                        Navigator.pop(context, true);
+                      }
+                    },
+                    icon: const Icon(Icons.save),
+                    label: const Text('Guardar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        )
+      ],
     );
   }
 }

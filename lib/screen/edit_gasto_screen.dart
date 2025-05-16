@@ -89,56 +89,102 @@ class _EditGastoScreenState extends State<EditGastoScreen> {
   @override
   // Crearemos la interfaz del usuario
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Editar Gasto')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form( // formulario
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField( // descripcion
-                controller: _descripcionController,
-                maxLines: 2, // maximo dos lineas
-                decoration: const InputDecoration(labelText: 'Descripción'),
-                validator: (value) =>
-                value == null || value.isEmpty ? 'Campo requerido' : null,
-              ),
-              const SizedBox(height: 10),
-              TextFormField( // monto
-                controller: _montoController,
-                decoration: const InputDecoration(labelText: 'Monto'),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Campo requerido';
-                  if (double.tryParse(value) == null) return 'Ingrese un número válido';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>( // menu de categorias
-                value: _categoria,
-                decoration: const InputDecoration(labelText: 'Categoría'),
-                items: categoriaGasto // mostrara las categorias
-                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
-                    .toList(),
-                onChanged: (value) => setState(() => _categoria = value!),
-              ),
-              const SizedBox(height: 10),
-              ListTile( // DatePicker de fecha
-                title: Text('Fecha: ${_fecha.toLocal().toString().substring(0, 10)}'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _seleccionarFecha,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton( // boton
-                onPressed: _modificarGasto,
-                child: const Text('Guardar cambios'),
-              ),
-            ],
+    return Stack(
+      children: [
+        // fondo con imagen
+        Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/background_image.png'),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
-      ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+              title: const Text('Editar Gasto'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form( // formulario
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField( // descripcion
+                    controller: _descripcionController,
+                    maxLength: 40,
+                    maxLines: 2, // maximo dos lineas
+                    decoration: InputDecoration(
+                        labelText: 'Descripción',
+                      prefixIcon: const Icon(Icons.description),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))
+                    ),
+                    validator: (value) =>
+                    value == null || value.isEmpty ? 'Campo requerido' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField( // monto
+                    controller: _montoController,
+                    decoration: InputDecoration(
+                        labelText: 'Monto',
+                      prefixIcon: Icon(Icons.attach_money),
+                      fillColor: Colors.white,
+                      filled: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Campo requerido';
+                      if (double.tryParse(value) == null) return 'Ingrese un número válido';
+                      if (double.parse(value) >= 10000) return 'Máximo permitido: 9999.99';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>( // menu de categorias
+                    value: _categoria,
+                    decoration: InputDecoration(
+                        labelText: 'Categoría',
+                      prefixIcon: Icon(Icons.category),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))
+                    ),
+                    items: categoriaGasto // mostrara las categorias
+                        .map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
+                    onChanged: (value) => setState(() => _categoria = value!),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile( // DatePicker de fecha
+                    title: Text('Fecha: ${_fecha.toLocal().toString().substring(0, 10)}'),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadiusDirectional.circular(12)),
+                    tileColor: Colors.white,
+                    trailing: const Icon(Icons.calendar_today, color: Colors.green,),
+                    onTap: _seleccionarFecha,
+                  ),
+                  const SizedBox(height: 30),
+                  ElevatedButton.icon( // boton
+                    onPressed: _modificarGasto,
+                    icon: const Icon(Icons.save),
+                    label: const Text('Modificar datos'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        )
+      ],
     );
   }
 }
