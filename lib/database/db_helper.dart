@@ -4,10 +4,12 @@ import 'package:gastosnoteapp/model/gastos_models.dart';
 
 //Singleton para que solo halla una instancia de la clase en toda la app
 class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._internal(); // instancia unica de la clase
+  static final DatabaseHelper instance = DatabaseHelper
+      ._internal(); // instancia unica de la clase
   static Database? _database; // variable para guardar la base de datos
 
-  factory DatabaseHelper() => instance; // constructor factory que retorna la misma instancia creada antes
+  factory DatabaseHelper() =>
+      instance; // constructor factory que retorna la misma instancia creada antes
 
   DatabaseHelper._internal(); // constructor interno privado privado
 
@@ -16,7 +18,8 @@ class DatabaseHelper {
   // Si no está abierta, la crea o abre con el nombre 'gastos.db' y la devuelve.
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('gastos.db'); // si no llama a _initDB para crearla o abrirla
+    _database =
+    await _initDB('gastos.db'); // si no llama a _initDB para crearla o abrirla
     return _database!; // retorna la bd, el operador ! se usa para asegurar que no es null
   }
 
@@ -53,7 +56,8 @@ class DatabaseHelper {
     return await db.insert(
       'gastos', // el nombre de la tabla
       gasto.toMap(), //convertimos el objeto a map
-      conflictAlgorithm: ConflictAlgorithm.replace, // Si ya existe un gasto con el mismo id, lo reemplaza
+      conflictAlgorithm: ConflictAlgorithm
+          .replace, // Si ya existe un gasto con el mismo id, lo reemplaza
     );
   }
 
@@ -64,9 +68,9 @@ class DatabaseHelper {
     final primerDiaDelMes = DateTime(ahora.year, ahora.month, 1);
 
     final List<Map<String, dynamic>> maps = await db.query(
-        'gastos',
+      'gastos',
       where: 'fecha >= ?',
-      whereArgs: [primerDiaDelMes.toIso8601String().substring(0,10)],
+      whereArgs: [primerDiaDelMes.toIso8601String().substring(0, 10)],
       orderBy: 'fecha DESC', // ordenar por fecha mas reciente
       limit: 20, // mostrara solo los 10 mas recientes
     ); // realiza la consulta
@@ -83,7 +87,8 @@ class DatabaseHelper {
     return await db.update(
       'gastos',
       gasto.toMap(),
-      where: 'id = ?', // el simbolo ?: es un placeholder para evitar inyecciones sql
+      where: 'id = ?',
+      // el simbolo ?: es un placeholder para evitar inyecciones sql
       whereArgs: [gasto.id], // el id que se va actualizar
     );
   }
@@ -96,43 +101,5 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
-  }
-
-  //para buscar los gastos por categoria o fecha
-  Future<List<Gasto>> buscarGastos({String? categoria, String? fecha}) async {
-    final db = await database;
-
-    // Verifica si ambos filtros están activos
-    if ((categoria != null && categoria.isNotEmpty) &&
-        (fecha != null && fecha.isNotEmpty)) {
-      throw Exception('Solo se puede buscar por categoría o por fecha, no ambos a la vez.');
-    }
-
-    String whereClause = '';
-    List<dynamic> whereArgs = [];
-
-    if (categoria != null && categoria.isNotEmpty) {
-      whereClause = 'categoria = ?';
-      whereArgs.add(categoria);
-    } else if (fecha != null && fecha.isNotEmpty) {
-      whereClause = 'fecha = ?';
-      whereArgs.add(fecha);
-    } else {
-      // Si no se pasó nada, filtrar por el mes actual
-      DateTime ahora = DateTime.now();
-      String mesActual = '${ahora.year.toString().padLeft(4, '0')}-${ahora.month.toString().padLeft(2, '0')}';
-      whereClause = 'fecha LIKE ?'; // esto busca todas las fechas  del mes
-      whereArgs.add('$mesActual%'); // "2025-05%"
-    }
-
-    // realizamos la consulta en la bd
-    final List<Map<String, dynamic>> result = await db.query(
-        'gastos',
-    where: whereClause,
-    whereArgs: whereArgs,
-    );
-
-    // convertimos cada map a un objeto gasto
-    return result.map((map) => Gasto.fromMap(map)).toList();
   }
 }

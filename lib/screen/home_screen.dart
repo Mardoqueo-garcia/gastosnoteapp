@@ -6,6 +6,7 @@ import 'package:gastosnoteapp/screen/edit_gasto_screen.dart';
 import 'package:gastosnoteapp/utils/fecha_utils.dart'; //
 import 'package:gastosnoteapp/utils/categoria_utils.dart';
 import 'package:gastosnoteapp/utils/toast_utils.dart';
+import 'package:gastosnoteapp/logica/gasto_service.dart';
 
 // clase principal para la pantalla de inicio
 class HomeScreen extends StatefulWidget {
@@ -33,13 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Función para obtener los gastos del mes desde la bd
   Future<void> _cargarGastosDelMes() async {
-    final List<Gasto> gastos = await DatabaseHelper.instance.obtenerGastos(); // lista de objeto gasto desde la db
-
-    // Calcula el gasto total sumando uno a uno
-    double total = 0.0;
-    for (var g in gastos) {
-      total += g.monto;
-    }
+    final gastos = await obtenerGastosDB();
+    final total = totalDeGastos(gastos);
     // Actualiza el estado de la pantalla con los nuevos gastos
     setState(() {
       _gastos = gastos;
@@ -47,123 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Funcion para mostrar las opciones al presionar un gasto en la lista
-  void _mostrarOpciones(BuildContext context, Gasto gasto){
-    showModalBottomSheet(
-        context: context,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        backgroundColor: Colors.white,
-        builder: (BuildContext ctx){
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.edit, color: Colors.green),
-                  title: const Text('Modificar'),
-                  onTap: () async {
-                    Navigator.pop(ctx); // cierra el modal
-                    // navega a la pantalla y espera el resultado
-                    final resultado = await Navigator.push(context,
-                      MaterialPageRoute(
-                          builder: (context) => EditGastoScreen(gasto: gasto)),
-                    );
-                    // si se modifico el resultado se recargara la lista
-                    if (resultado == true){
-                      _cargarGastosDelMes();
-                    }
-                  },
-                ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(
-                      Icons.delete,
-                      color: Colors.red),
-                  title: const Text('Eliminar'),
-                  onTap: () {
-                    Navigator.pop(ctx); // cierra el modal
-                    _confirmarEliminacion(context, gasto);
-                  },
-                )
-              ],
-            ),
-          );
-        });
-  }
-
-  // Funcion para eliminar en la pagina modal
-  void _confirmarEliminacion(BuildContext context, Gasto gasto) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        //borderradius del modal principal
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: const Text('Eliminar gasto?', 
-          style: TextStyle(fontWeight: FontWeight.bold),),
-        content: const Text('Seguro que deseas eliminar este gasto?'),
-        actions: [
-          TextButton(
-              onPressed: () =>  Navigator.of(ctx).pop(),
-          child: const Text(
-              'Cancelar',
-            style: TextStyle(
-              color: Colors.red,
-            ),
-          ), // cancelamos lo de eliminar
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.lightGreen,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: const Icon(Icons.delete, color: Colors.red,),
-            label: const Text(
-              'Eliminar',
-              style: TextStyle(color: Colors.red),
-            ),
-            onPressed: () async {
-              await DatabaseHelper.instance.eliminarGasto(gasto.id!);
-              Navigator.of(ctx).pop(); // cierra el dialog
-              // mostramos el toast de confirmacion
-              mostrarToast(
-                  context, 'Gasto eliminado correctamente',
-                  Colors.red, Icons.delete);
-              _cargarGastosDelMes(); // refresca la lista
-            },
-          ),
-        ],
-      )
-    );
-  }
-
   // Funcion para el buscador
   void _buscarGastoMesyCategoria() async {
-    final db = await DatabaseHelper.instance.database;
-    final primerDia = DateTime(_mesSeleccionado.year, _mesSeleccionado.month, 1);
-    final ultimoDia =  DateTime(_mesSeleccionado.year, _mesSeleccionado.month + 1, 0);
-    String where = 'fecha BETWEEN ? AND ?';
-
-    List<String> whereArgs = [
-      primerDia.toIso8601String().substring(0,10),
-      ultimoDia.toIso8601String().substring(0,10)];
-    if (_categoriaSeleccionada != 'Todas') {
-      where += ' AND categoria = ?';
-      whereArgs.add(_categoriaSeleccionada);
-    }
-    // Hacemos la consulta a la db
-    final maps = await db.query(
-      'gastos',
-      where: where,
-      whereArgs: whereArgs,
-      orderBy: 'fecha DESC'
+    final gastos = await buscarPorMesYCategoria(
+      mesSeleccionado : _mesSeleccionado,
+      categoriaSeleccionada : _categoriaSeleccionada,
     );
 
     setState(() {
-      _gastos = maps.map((e) => Gasto.fromMap(e)).toList();
-      _totalGastos = _gastos.fold(0, (suma, g) => suma + g.monto);
+      _gastos = gastos;
+      _totalGastos = totalDeGastos(gastos);
     });
   }
 
@@ -176,28 +65,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _cargarGastosDelMes(); // Cargaremos los datos
   }
 
-  // Funcion para cambiar de color segun la categoria
-  Color obtenerColorCategoria (String categoria) {
-    switch (categoria.toLowerCase()) {
-      case 'alimentación': return Colors.orangeAccent;
-      case 'salud': return Colors.blueAccent;
-      case 'entretenimiento': return Colors.purpleAccent;
-      case 'transporte': return Colors.black;
-      case 'otros': return Colors.grey;
-      default: return Colors.green;
-    }
-  }
-  // Funcion para obtener codigo segun categoria
-  String obtenerCodCategoria(String categoria){
-    switch(categoria.toLowerCase()){
-      case 'alimentación': return 'AL';
-      case 'salud': return 'SA';
-      case 'entretenimiento': return 'EN';
-      case 'transporte': return 'TR';
-      case 'otros': return 'OT';
-      default: return 'XX';
-    }
-  }
   // Funcion de estilo del appBar (Titulo)
   PreferredSizeWidget appBarEstilo(){
     return PreferredSize(
@@ -276,6 +143,97 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+  // Funcion para mostrar las opciones al presionar un gasto en la lista
+  void _mostrarOpciones(BuildContext context, Gasto gasto){
+    showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        backgroundColor: Colors.white,
+        builder: (BuildContext ctx){
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.edit, color: Colors.green),
+                  title: const Text('Modificar'),
+                  onTap: () async {
+                    Navigator.pop(ctx); // cierra el modal
+                    // navega a la pantalla y espera el resultado
+                    final resultado = await Navigator.push(context,
+                      MaterialPageRoute(
+                          builder: (context) => EditGastoScreen(gasto: gasto)),
+                    );
+                    // si se modifico el resultado se recargara la lista
+                    if (resultado == true){
+                      _cargarGastosDelMes();
+                    }
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(
+                      Icons.delete,
+                      color: Colors.red),
+                  title: const Text('Eliminar'),
+                  onTap: () {
+                    Navigator.pop(ctx); // cierra el modal
+                    _confirmarEliminacion(context, gasto);
+                  },
+                )
+              ],
+            ),
+          );
+        });
+  }
+  // Funcion para eliminar en la pagina modal
+  void _confirmarEliminacion(BuildContext context, Gasto gasto) {
+    showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          //borderradius del modal principal
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text('Eliminar gasto?',
+            style: TextStyle(fontWeight: FontWeight.bold),),
+          content: const Text('Seguro que deseas eliminar este gasto?'),
+          actions: [
+            TextButton(
+              onPressed: () =>  Navigator.of(ctx).pop(),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: Colors.red,
+                ),
+              ), // cancelamos lo de eliminar
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.lightGreen,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.delete, color: Colors.red,),
+              label: const Text(
+                'Eliminar',
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () async {
+                await DatabaseHelper.instance.eliminarGasto(gasto.id!);
+                Navigator.of(ctx).pop(); // cierra el dialog
+                // mostramos el toast de confirmacion
+                mostrarToast(
+                    context, 'Gasto eliminado correctamente',
+                    Colors.red, Icons.delete);
+                _cargarGastosDelMes(); // refresca la lista
+              },
+            ),
+          ],
+        )
+    );
+  }
+
 
   // CONTRUCCION DE LA PANTALLA VISUAL
   // Pantalla para el buscador
